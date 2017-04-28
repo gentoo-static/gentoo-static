@@ -11,13 +11,19 @@ EGIT_REPO_URI="git://git.suckless.org/dwm"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS=""
-IUSE="xinerama"
+IUSE="static xinerama"
 
 RDEPEND="
 	media-libs/fontconfig
 	x11-libs/libX11
 	x11-libs/libXft
 	xinerama? ( x11-libs/libXinerama )
+	static? (
+		media-libs/fontconfig[static-libs]
+		x11-libs/libX11[static-libs]
+		x11-libs/libXft[static-libs]
+		xinerama? ( x11-libs/libXinerama[static-libs] )
+	)
 "
 DEPEND="
 	${RDEPEND}
@@ -41,6 +47,14 @@ src_prepare() {
 		-e '/@echo CC/d' \
 		-e 's|@${CC}|$(CC)|g' \
 		Makefile || die
+	if use static; then
+		sed -i \
+			-e 's/^XINERAMALIBS  = .*/XINERAMALIBS  = -lXinerama -lXext/' \
+			-e 's/^FREETYPELIBS = .*/FREETYPELIBS = -lXft -lfontconfig -lXrender -lfreetype -lexpat -lz/' \
+			-e 's/^LIBS = .*/LIBS = ${XINERAMALIBS} ${FREETYPELIBS} -lX11 -lxcb -lXau -lXdmcp/' \
+			-e 's/^LDFLAGS  += .*/LDFLAGS  += -static ${LIBS}/' \
+			config.mk || die
+	fi
 }
 
 src_compile() {
