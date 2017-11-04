@@ -1,0 +1,23 @@
+--- a/src/lxc/Makefile.am
++++ b/src/lxc/Makefile.am
+@@ -182,7 +182,7 @@
+ 
+ liblxc_la_LDFLAGS = \
+ 	-pthread \
+-	-shared \
++	-static \
+ 	-Wl,-soname,liblxc.so.$(firstword $(subst ., ,@LXC_ABI@)) \
+ 	-version-info @LXC_ABI_MAJOR@
+ 
+@@ -298,11 +298,6 @@
+ install-exec-local: install-libLTLIBRARIES
+ 	mkdir -p $(DESTDIR)$(datadir)/lxc
+ 	install -c -m 644 lxc.functions $(DESTDIR)$(datadir)/lxc
+-	mv $(shell readlink -f $(DESTDIR)$(libdir)/liblxc.so) $(DESTDIR)$(libdir)/liblxc.so.@LXC_ABI@
+-	rm -f $(DESTDIR)$(libdir)/liblxc.so $(DESTDIR)$(libdir)/liblxc.so.1
+-	cd $(DESTDIR)$(libdir); \
+-	ln -sf liblxc.so.@LXC_ABI@ liblxc.so.$(firstword $(subst ., ,@LXC_ABI@)); \
+-	ln -sf liblxc.so.$(firstword $(subst ., ,@LXC_ABI@)) liblxc.so
+ 
+ install-exec-hook:
+ 	chmod u+s $(DESTDIR)$(libexecdir)/lxc/lxc-user-nic

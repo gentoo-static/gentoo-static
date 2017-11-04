@@ -16,7 +16,7 @@ KEYWORDS="~amd64 ~arm ~arm64"
 
 LICENSE="LGPL-3"
 SLOT="0"
-IUSE="cgmanager doc examples lua python seccomp"
+IUSE="cgmanager doc examples lua python seccomp static"
 
 RDEPEND="net-libs/gnutls
 	sys-libs/libcap
@@ -26,6 +26,14 @@ RDEPEND="net-libs/gnutls
 	seccomp? ( sys-libs/libseccomp )"
 
 DEPEND="${RDEPEND}
+	static? (
+		sys-libs/libcap[static-libs]
+		net-libs/gnutls[static-libs]
+		dev-libs/libunistring[static-libs]
+		dev-libs/libtasn1[static-libs]
+		dev-libs/nettle[static-libs]
+		dev-libs/gmp[static-libs]
+	)
 	doc? ( app-text/docbook-sgml-utils )
 	>=sys-kernel/linux-headers-3.2"
 
@@ -104,12 +112,21 @@ src_prepare() {
 	eapply "${FILESDIR}"/${PN}-2.0.6-bash-completion.patch
 	#558854
 	eapply "${FILESDIR}"/${PN}-2.0.5-omit-sysconfig.patch
+
+	if use static; then
+		eapply "${FILESDIR}"/lxc-static.patch
+	fi
+
 	eapply_user
 	eautoreconf
 }
 
 src_configure() {
 	append-flags -fno-strict-aliasing
+
+	if use static; then
+		export LIBS="-lunistring -ltasn1 -lnettle -lhogweed -lgmp"
+	fi
 
 	if use python; then
 		#541932
@@ -144,7 +161,7 @@ python_compile() {
 }
 
 src_compile() {
-	default
+	emake "$(usex static "LDFLAGS=$LDFLAGS -all-static")" || die "emake failed"
 
 	if use python; then
 		pushd "${S}/src/python-${PN}" > /dev/null
